@@ -381,3 +381,53 @@ select.ua-select option {
     padding: 1.5rem;
   }
 }
+
+@media (max-width: 430px) {
+  .parameter-grid {
+    gap: 0.75rem 0.625rem;
+  }
+
+  .parameter-grid .label-row {
+    gap: 0.25rem;
+  }
+
+  .parameter-grid .label-row span {
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+  }
+
+  .parameter-grid .label-row small {
+    font-size: 0.5625rem;
+  }
+
+  .parameter-grid .ua-field input,
+  .parameter-grid .ua-field select {
+    padding: 0.55rem 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .parameter-grid .ua-field > span {
+    padding-inline: 0.45rem;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell {
+    padding-inline: 0.75rem;
+  }
+
+  .parameter-grid {
+    gap: 0.625rem 0.5rem;
+  }
+
+  .parameter-grid .ua-field input,
+  .parameter-grid .ua-field select {
+    padding-inline: 0.4rem;
+    font-size: 0.875rem;
+  }
+
+  .parameter-grid .ua-field > span {
+    padding-inline: 0.35rem;
+  }
+}
