@@ -60,8 +60,6 @@ function Lbl({ children, hint, dot }) {
 }
 
 function TextField({ label, suffix, value, onChange, hint, dot }) {
-  const parsed = parseNum(value);
-  const showParsed = /[kкmм]/i.test(value || "");
   return (
     <label className="field-block">
       <Lbl hint={hint} dot={dot}>{label}</Lbl>
@@ -74,7 +72,6 @@ function TextField({ label, suffix, value, onChange, hint, dot }) {
         />
         <span>{suffix}</span>
       </div>
-      {showParsed && <div className="parsed-value">= {fmt(parsed)}</div>}
     </label>
   );
 }
