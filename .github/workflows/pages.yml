@@ -5,17 +5,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Pushing to the gh-pages branch needs write access to repo contents.
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: gh-pages-deploy
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,19 +25,11 @@ jobs:
           node-version: 20
       - name: Build static site
         run: npm run build
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages (production, served at site root)
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          # keep_files preserves the /pr-preview/* folders so a production
+          # deploy never wipes open PR previews living on the same branch.
+          keep_files: true
