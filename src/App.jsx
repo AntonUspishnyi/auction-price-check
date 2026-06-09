@@ -50,21 +50,21 @@ const parseNum = (raw) => {
   return Number.isFinite(v) ? v * mult : 0;
 };
 
-function Lbl({ children, hint }) {
+function Lbl({ children, hint, dot }) {
   return (
     <div className="label-row">
-      <span>{children}</span>
+      <span>{dot && <i className="stale-dot" aria-hidden="true" />}{children}</span>
       {hint && <small>{hint}</small>}
     </div>
   );
 }
 
-function TextField({ label, suffix, value, onChange, hint }) {
+function TextField({ label, suffix, value, onChange, hint, dot }) {
   const parsed = parseNum(value);
   const showParsed = /[kкmм]/i.test(value || "");
   return (
     <label className="field-block">
-      <Lbl hint={hint}>{label}</Lbl>
+      <Lbl hint={hint} dot={dot}>{label}</Lbl>
       <div className="ua-field">
         <input
           type="text"
@@ -177,7 +177,7 @@ function App() {
           {mode === "budget" ? (
             <>
               <div className="result-label">Макс. ставка на лот</div>
-              <div className="result-value">¥{fmt(L)}</div>
+              <div className="result-value" key={`bid-${Math.round(L)}`}>¥{fmt(L)}</div>
               <div className="result-subtitle">≈ €{fmt(lotE)} за курсом</div>
               {calc.rawLotYen < 0 && (
                 <div className="danger">Бюджету не вистачає на доставку + розмитнення</div>
@@ -186,7 +186,7 @@ function App() {
           ) : (
             <>
               <div className="result-label">Загальна вартість «під ключ»</div>
-              <div className="result-value">€{fmt(grandTotal)}</div>
+              <div className="result-value" key={`tot-${Math.round(grandTotal)}`}>€{fmt(grandTotal)}</div>
               <div className="result-subtitle">лот ¥{fmt(L)} + усі витрати</div>
             </>
           )}
@@ -205,7 +205,7 @@ function App() {
 
         <div className="eyebrow">Параметри</div>
         <div className="parameter-grid">
-          <TextField label="Курс EUR/JPY" suffix="¥/€" value={rate} onChange={setRate} hint="актуальний" />
+          <TextField label="Курс EUR/JPY" suffix="¥/€" value={rate} onChange={setRate} hint="онови перед ставкою" dot />
           <TextField label="Податок (база)" suffix="×" value={baseTax} onChange={setBaseTax} hint={`ефект. ×${fmt(effT, 3)}`} />
           <TextField label="Розмитнення" suffix="€" value={fix} onChange={setFix} />
           <label className="field-block">
