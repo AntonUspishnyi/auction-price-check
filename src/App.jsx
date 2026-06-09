@@ -205,7 +205,7 @@ function App() {
 
         <div className="eyebrow">Параметри</div>
         <div className="parameter-grid">
-          <TextField label="Курс EUR/JPY" suffix="¥/€" value={rate} onChange={setRate} hint="онови перед ставкою" dot />
+          <TextField label="Курс EUR/JPY" suffix="¥/€" value={rate} onChange={setRate} hint="онови" dot />
           <TextField label="Податок (база)" suffix="×" value={baseTax} onChange={setBaseTax} hint={`ефект. ×${fmt(effT, 3)}`} />
           <TextField label="Розмитнення" suffix="€" value={fix} onChange={setFix} />
           <label className="field-block">
