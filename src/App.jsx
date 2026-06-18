@@ -1,4 +1,5 @@
 const { useEffect, useMemo, useState } = React;
+const h = React.createElement;
 
 // Total(€) = (Lot¥ + Delivery¥) * EffTax / Rate + Fixprice€
 // Reverse:  Lot¥ = (Budget€ - Fixprice€) * Rate / EffTax - Delivery¥
@@ -18,16 +19,9 @@ const DELIVERY = [
 
 const C = {
   bg: "#060E1C",
-  panel: "#0B1729",
-  panelSoft: "#0E1D33",
-  border: "#1C3052",
   blue: "#0057B7",
   yellow: "#FFD700",
-  yellowSoft: "#FFE873",
-  text: "#EAF2FF",
   dim: "#8DA2C0",
-  faint: "#566C8C",
-  danger: "#FF7A7A",
 };
 
 const fmt = (n, d = 0) =>
@@ -51,48 +45,50 @@ const parseNum = (raw) => {
 };
 
 function Lbl({ children, hint, dot }) {
-  return (
-    <div className="label-row">
-      <span>{dot && <i className="stale-dot" aria-hidden="true" />}{children}</span>
-      {hint && <small>{hint}</small>}
-    </div>
+  return h(
+    "div",
+    { className: "label-row" },
+    h("span", null, dot ? h("i", { className: "stale-dot", "aria-hidden": "true" }) : null, children),
+    hint ? h("small", null, hint) : null,
   );
 }
 
 function TextField({ label, suffix, value, onChange, hint, dot }) {
-  return (
-    <label className="field-block">
-      <Lbl hint={hint} dot={dot}>{label}</Lbl>
-      <div className="ua-field">
-        <input
-          type="text"
-          inputMode="decimal"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        <span>{suffix}</span>
-      </div>
-    </label>
+  return h(
+    "label",
+    { className: "field-block" },
+    h(Lbl, { hint, dot }, label),
+    h(
+      "div",
+      { className: "ua-field" },
+      h("input", {
+        type: "text",
+        inputMode: "decimal",
+        value,
+        onChange: (e) => onChange(e.target.value),
+      }),
+      h("span", null, suffix),
+    ),
   );
 }
 
 function Seg({ options, value, onChange, activeBg, activeColor }) {
-  return (
-    <div className="segmented-control">
-      {options.map(([v, t]) => {
-        const on = value === v;
-        return (
-          <button
-            key={v}
-            type="button"
-            onClick={() => onChange(v)}
-            style={on ? { background: activeBg, color: activeColor } : { color: C.dim, background: "transparent" }}
-          >
-            {t}
-          </button>
-        );
-      })}
-    </div>
+  return h(
+    "div",
+    { className: "segmented-control" },
+    options.map(([v, t]) => {
+      const on = value === v;
+      return h(
+        "button",
+        {
+          key: v,
+          type: "button",
+          onClick: () => onChange(v),
+          style: on ? { background: activeBg, color: activeColor } : { color: C.dim, background: "transparent" },
+        },
+        t,
+      );
+    }),
   );
 }
 
@@ -109,7 +105,6 @@ function App() {
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
     if (!tg) return;
-
     tg.ready();
     tg.expand();
     tg.setHeaderColor(C.bg);
@@ -139,123 +134,82 @@ function App() {
   const taxE = ((L + D) * (effT - 1)) / R;
   const grandTotal = ((L + D) * effT) / R + F;
 
-  return (
-    <main className="app-shell">
-      <section className="calculator-card" aria-label="Japan auction bid calculator">
-        <header className="header">
-          <div className="flag" aria-hidden="true">
-            <div className="flag-blue" />
-            <div className="flag-yellow" />
-          </div>
-          <h1>Japan Auction · Bid Calc</h1>
-        </header>
-        <div className="accent-line" />
-        <p className="formula">(Лот + доставка) × податок ÷ курс + розмитнення</p>
-
-        <div className="section-space">
-          <Seg
-            options={[["budget", "Бюджет → ставка"], ["lot", "Ставка → вартість"]]}
-            value={mode}
-            onChange={setMode}
-            activeBg={C.yellow}
-            activeColor="#10203A"
-          />
-        </div>
-
-        <div className="section-space compact">
-          {mode === "budget" ? (
-            <TextField label="Макс. бюджет" suffix="€" value={budget} onChange={setBudget} hint="скільки готовий витратити" />
-          ) : (
-            <TextField label="Ціна лоту" suffix="¥" value={lot} onChange={setLot} hint="можна 1775k" />
-          )}
-        </div>
-
-        <div className="result-card">
-          {mode === "budget" ? (
-            <>
-              <div className="result-label">Макс. ставка на лот</div>
-              <div className="result-value" key={`bid-${Math.round(L)}`}>¥{fmt(L)}</div>
-              <div className="result-subtitle">≈ €{fmt(lotE)} за курсом</div>
-              {calc.rawLotYen < 0 && (
-                <div className="danger">Бюджету не вистачає на доставку + розмитнення</div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="result-label">Загальна вартість «під ключ»</div>
-              <div className="result-value" key={`tot-${Math.round(grandTotal)}`}>€{fmt(grandTotal)}</div>
-              <div className="result-subtitle">лот ¥{fmt(L)} + усі витрати</div>
-            </>
-          )}
-        </div>
-
-        <div className="eyebrow">Походження авто</div>
-        <div className="section-space compact">
-          <Seg
-            options={[["jp", `Японська ×${fmt(baseT, 2)}`], ["other", `Не японська ×${fmt(baseT * 1.1, 3)}`]]}
-            value={origin}
-            onChange={setOrigin}
-            activeBg={C.blue}
-            activeColor="#FFFFFF"
-          />
-        </div>
-
-        <div className="eyebrow">Параметри</div>
-        <div className="parameter-grid">
-          <TextField label="Курс EUR/JPY" suffix="¥/€" value={rate} onChange={setRate} hint="онови" dot />
-          <TextField label="Податок (база)" suffix="×" value={baseTax} onChange={setBaseTax} hint={`ефект. ×${fmt(effT, 3)}`} />
-          <TextField label="Розмитнення" suffix="€" value={fix} onChange={setFix} />
-          <label className="field-block">
-            <Lbl hint="об'єм">Доставка</Lbl>
-            <div className="ua-field">
-              <select
-                className="ua-select"
-                value={deliveryIdx}
-                onChange={(e) => setDeliveryIdx(Number(e.target.value))}
-              >
-                {DELIVERY.map((d, i) => (
-                  <option key={d.label} value={i}>{d.label} · {fmt(d.yen)}</option>
-                ))}
-              </select>
-              <span>¥</span>
-            </div>
-            <div className="parsed-value">= ¥{fmt(D)}</div>
-          </label>
-        </div>
-
-        <div className="breakdown">
-          <div className="breakdown-title">Розклад (€)</div>
-          {[
-            ["Лот", lotE],
-            [`Доставка · ${DELIVERY[deliveryIdx].label}`, delE],
-            [`Податок (+${fmt((effT - 1) * 100, 1)}%)`, taxE],
-            ["Розмитнення", F],
-          ].map(([k, v]) => (
-            <div key={k} className="breakdown-row">
-              <span>{k}</span>
-              <strong>€{fmt(v)}</strong>
-            </div>
-          ))}
-          <div className="breakdown-row total">
-            <span>Разом</span>
-            <strong>€{fmt(grandTotal)}</strong>
-          </div>
-        </div>
-
-        <p className="note">
-          Поля приймають k / m (1775k = 1 775 000). Курс ¥/€ онови перед кожною ставкою.
-          Розрахунок «під ключ»; реальні комісії залежать від брокера.
-        </p>
-
-        <footer className="footer">
-          Made with <span>💛</span> by{" "}
-          <a href="https://t.me/Anton_Uspishnyi" target="_blank" rel="noopener noreferrer">
-            @Anton_Uspishnyi
-          </a>
-        </footer>
-      </section>
-    </main>
+  return h(
+    "main",
+    { className: "app-shell" },
+    h(
+      "section",
+      { className: "calculator-card", "aria-label": "Japan auction bid calculator" },
+      h(
+        "header",
+        { className: "header" },
+        h("div", { className: "flag", "aria-hidden": "true" }, h("div", { className: "flag-blue" }), h("div", { className: "flag-yellow" })),
+        h("h1", null, "Japan Auction · Bid Calc"),
+      ),
+      h("div", { className: "accent-line" }),
+      h("p", { className: "formula" }, "(Лот + доставка) × податок ÷ курс + розмитнення"),
+      h("div", { className: "section-space" }, h(Seg, { options: [["budget", "Бюджет → ставка"], ["lot", "Ставка → вартість"]], value: mode, onChange: setMode, activeBg: C.yellow, activeColor: "#10203A" })),
+      h("div", { className: "section-space compact" }, mode === "budget"
+        ? h(TextField, { label: "Макс. бюджет", suffix: "€", value: budget, onChange: setBudget, hint: "скільки готовий витратити" })
+        : h(TextField, { label: "Ціна лоту", suffix: "¥", value: lot, onChange: setLot, hint: "можна 1775k" })),
+      h(
+        "div",
+        { className: "result-card" },
+        mode === "budget"
+          ? [
+              h("div", { className: "result-label", key: "label" }, "Макс. ставка на лот"),
+              h("div", { className: "result-value", key: `bid-${Math.round(L)}` }, `¥${fmt(L)}`),
+              h("div", { className: "result-subtitle", key: "subtitle" }, `≈ €${fmt(lotE)} за курсом`),
+              calc.rawLotYen < 0 ? h("div", { className: "danger", key: "danger" }, "Бюджету не вистачає на доставку + розмитнення") : null,
+            ]
+          : [
+              h("div", { className: "result-label", key: "label" }, "Загальна вартість «під ключ»"),
+              h("div", { className: "result-value", key: `tot-${Math.round(grandTotal)}` }, `€${fmt(grandTotal)}`),
+              h("div", { className: "result-subtitle", key: "subtitle" }, `лот ¥${fmt(L)} + усі витрати`),
+            ],
+      ),
+      h("div", { className: "eyebrow" }, "Походження авто"),
+      h("div", { className: "section-space compact" }, h(Seg, { options: [["jp", `Японська ×${fmt(baseT, 2)}`], ["other", `Не японська ×${fmt(baseT * 1.1, 3)}`]], value: origin, onChange: setOrigin, activeBg: C.blue, activeColor: "#FFFFFF" })),
+      h("div", { className: "eyebrow" }, "Параметри"),
+      h(
+        "div",
+        { className: "parameter-grid" },
+        h(TextField, { label: "Курс EUR/JPY", suffix: "¥/€", value: rate, onChange: setRate, hint: "онови", dot: true }),
+        h(TextField, { label: "Податок (база)", suffix: "×", value: baseTax, onChange: setBaseTax, hint: `ефект. ×${fmt(effT, 3)}` }),
+        h(TextField, { label: "Розмитнення", suffix: "€", value: fix, onChange: setFix }),
+        h(
+          "label",
+          { className: "field-block" },
+          h(Lbl, { hint: "об'єм" }, "Доставка"),
+          h(
+            "div",
+            { className: "ua-field" },
+            h(
+              "select",
+              { className: "ua-select", value: deliveryIdx, onChange: (e) => setDeliveryIdx(Number(e.target.value)) },
+              DELIVERY.map((d, i) => h("option", { key: d.label, value: i }, `${d.label} · ${fmt(d.yen)}`)),
+            ),
+            h("span", null, "¥"),
+          ),
+          h("div", { className: "parsed-value" }, `= ¥${fmt(D)}`),
+        ),
+      ),
+      h(
+        "div",
+        { className: "breakdown" },
+        h("div", { className: "breakdown-title" }, "Розклад (€)"),
+        ...[
+          ["Лот", lotE],
+          [`Доставка · ${DELIVERY[deliveryIdx].label}`, delE],
+          [`Податок (+${fmt((effT - 1) * 100, 1)}%)`, taxE],
+          ["Розмитнення", F],
+        ].map(([k, v]) => h("div", { key: k, className: "breakdown-row" }, h("span", null, k), h("strong", null, `€${fmt(v)}`))),
+        h("div", { className: "breakdown-row total" }, h("span", null, "Разом"), h("strong", null, `€${fmt(grandTotal)}`)),
+      ),
+      h("p", { className: "note" }, "Поля приймають k / m (1775k = 1 775 000). Курс ¥/€ онови перед кожною ставкою. Розрахунок «під ключ»; реальні комісії залежать від брокера."),
+      h("footer", { className: "footer" }, "Made with ", h("span", null, "💛"), " by ", h("a", { href: "https://t.me/Anton_Uspishnyi", target: "_blank", rel: "noopener noreferrer" }, "@Anton_Uspishnyi")),
+    ),
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));
